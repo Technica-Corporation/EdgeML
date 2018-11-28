@@ -62,7 +62,7 @@ void sparsekmeans::distsqAllpointsToCenters(
 
   FP_TYPE *centersTranspose = new FP_TYPE[numCenters*dim];
 
-  // TODO: mkl_?omatcopy doesn't seem to work. 
+  // TODO: mkl_?omatcopy doesn't seem to work.
   /*omatcopy(CblasColMajor, 'T',
     dim, numCenters,
     1.0, centers, dim, centersTranspose, numCenters);*/
@@ -78,11 +78,11 @@ void sparsekmeans::distsqAllpointsToCenters(
   const char matdescra[6] = { 'G',0,0,'C',0,0 };
   FP_TYPE alpha = -2.0; FP_TYPE beta = 0.0;
 
-  csrmm(&transa, &m, &n, &k, &alpha, matdescra,
-    valsCSC, (const sparseIndex_t*)rowsCSC,
-    (const sparseIndex_t*)offsetsCSC, (const sparseIndex_t*)(offsetsCSC + 1),
-    centersTranspose, &n,
-    &beta, distMatrix, &n);
+  // csrmm(&transa, &m, &n, &k, &alpha, matdescra,
+  //   valsCSC, (const sparseIndex_t*)rowsCSC,
+  //   (const sparseIndex_t*)offsetsCSC, (const sparseIndex_t*)(offsetsCSC + 1),
+  //   centersTranspose, &n,
+  //   &beta, distMatrix, &n);
   gemm(CblasRowMajor, CblasTrans, CblasNoTrans,
     numPoints, numCenters, 1,
     (FP_TYPE)1.0, onesVec, numPoints, centersL2Sq, numCenters,
@@ -102,7 +102,7 @@ void sparsekmeans::computeClosestCenters(
   const dataCount_t numCenters,
   MatrixXuf& centersMatrix,
   dataCount_t *closestCenter,
-  FP_TYPE *const distMatrix) // Initialized to numCenters*numPoints size 
+  FP_TYPE *const distMatrix) // Initialized to numCenters*numPoints size
 {
   assert(pointsMatrix.rows() == centersMatrix.rows());
   FP_TYPE *centers = centersMatrix.data();

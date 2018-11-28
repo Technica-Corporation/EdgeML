@@ -156,7 +156,7 @@ void BonsaiTrainer::finalizeData()
   data.finalizeData();
   if (model.hyperParams.ntrain == 0) {
     // This condition means that the ingest type is Interface ingest,
-    // hence the number of training points was not known beforehand. 
+    // hence the number of training points was not known beforehand.
     model.hyperParams.ntrain = data.Xtrain.cols();
     assert(data.Xvalidation.cols() == 0);
     model.hyperParams.nvalidation = 0;
@@ -165,7 +165,7 @@ void BonsaiTrainer::finalizeData()
     assert(model.hyperParams.ntrain == data.Xtrain.cols());
   }
 
-  // Following asserts can only be made in finalieData since TLC 
+  // Following asserts can only be made in finalieData since TLC
   // does not give us number of training points before-hand!
   assert(model.hyperParams.ntrain > 0);
 
@@ -435,8 +435,8 @@ void BonsaiTrainer::computeScoreOfClassID(
 
   // Scale VXClassIDScratch by scalar Sigma
   scal(VXClassIDScratch.rows()*VXClassIDScratch.cols(), model.hyperParams.Sigma, VXClassIDScratch.data(), 1);
-  // compute tanh in place using vector ops  
-  vTanh(VXClassIDScratch.rows()*VXClassIDScratch.cols(), VXClassIDScratch.data(), VXClassIDScratch.data());
+  // compute tanh in place using vector ops
+  // vTanh(VXClassIDScratch.rows()*VXClassIDScratch.cols(), VXClassIDScratch.data(), VXClassIDScratch.data());
   // 3-way in-place hadamard into WXClassIDScratch
   hadamard3(WXClassIDScratch, WXClassIDScratch, VXClassIDScratch, treeCache.nodeProbability);
   // This computes the column sums of WXClassIDScratch
@@ -505,10 +505,10 @@ void BonsaiTrainer::TreeCache::fillNodeProbability(
     mm(tanhThetaXCache, Thetamat, CblasNoTrans, Xdata, CblasNoTrans, (FP_TYPE)1.0, (FP_TYPE)0.0L);
   // Scale VXClassIDScratch by scalar sigma_i
   scal(tanhThetaXCache.rows()*tanhThetaXCache.cols(), model.hyperParams.sigma_i, tanhThetaXCache.data(), 1);
-  // compute tanh in place using vector ops  
-  vTanh(tanhThetaXCache.rows()*tanhThetaXCache.cols(), tanhThetaXCache.data(), tanhThetaXCache.data());
+  // compute tanh in place using vector ops
+  // vTanh(tanhThetaXCache.rows()*tanhThetaXCache.cols(), tanhThetaXCache.data(), tanhThetaXCache.data());
 
-  // Iterate over all nodes and generate probablity for reaching each node. 
+  // Iterate over all nodes and generate probablity for reaching each node.
   for (int n = 0; n < Xdata.cols(); n++)
   {
     for (int i = 0; i < model.hyperParams.internalNodes; i++)

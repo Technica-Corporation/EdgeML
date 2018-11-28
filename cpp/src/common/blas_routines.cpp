@@ -112,7 +112,7 @@ void EdgeML::mm(
   MKL_INT k = in1.cols();
 
   FP_TYPE *in2Transpose = new FP_TYPE[in2.rows()*in2.cols()];
-  omatcopy(in2.IsRowMajor ? 'R' : 'C', 't',
+  omatcopy(in2.IsRowMajor ? CblasRowMajor : CblasColMajor, CblasTrans,
     in2.rows(), in2.cols(),
     1.0,
     in2.data(), in2.IsRowMajor ? in2.cols() : in2.rows(),
@@ -122,7 +122,7 @@ void EdgeML::mm(
   Matrix<FP_TYPE, Dynamic, Dynamic, RowMajor> out_(out.rows(), out.cols());
   timer.nextTime("creating a dense output matrix that stores the rowmajor version");
 
-  omatcopy('C', 't',
+  omatcopy(CblasColMajor, CblasTrans,
     out.rows(), out.cols(),
     1.0,
     out.data(), out.rows(),
@@ -138,15 +138,41 @@ void EdgeML::mm(
     char transa = 't';
     assert(in1.IsRowMajor == false);
 
-    cscmm(&transa,
-      &m, &n, &k,
-      &alpha,
-      matdescra,
-      in1.valuePtr(), in1.innerIndexPtr(),
-      in1.outerIndexPtr(), in1.outerIndexPtr() + 1,
-      (in2.IsRowMajor ^ (t2 == CblasTrans)) ? in2.data() : in2Transpose, &ldIn2,
-      &beta,
-      out_.data(), &ldOut);
+    // cscmm(&transa,
+    //   &m, &n, &k,
+    //   &alpha,
+    //   matdescra,
+    //   in1.valuePtr(), in1.innerIndexPtr(),
+    //   in1.outerIndexPtr(), in1.outerIndexPtr() + 1,
+    //   (in2.IsRowMajor ^ (t2 == CblasTrans)) ? in2.data() : in2Transpose, &ldIn2,
+    //   &beta,
+    //   out_.data(), &ldOut);
+
+    int A = uscr_begin((int) in1.rows(), (int) in1.cols());
+
+    for(int i=0; i<in1.rows(); i++){
+      for(int j=0; j<in1.cols(); j++){
+        if(in1.coeff(i,j) != 0 ){
+          uscr_insert_entry(A, in1.coeff(i,j), i, j);
+        }
+
+      }
+    } //end outer for
+
+    cscmm(
+      blas_colmajor,
+      blas_trans,
+      (int) n,
+      alpha,
+      A,
+      (in2.IsRowMajor ^ (t2 == CblasTrans)) ? in2.data() : in2Transpose,
+      (int) ldIn2,
+      out.data(),
+      (int) ldOut
+    );
+
+    BLAS_usds(A);  // free memory
+
     timer.nextTime("cscmm");
   }
   else {
@@ -155,18 +181,46 @@ void EdgeML::mm(
     SparseMatrix<FP_TYPE, RowMajor, sparseIndex_t> sp(in1);
     timer.nextTime("creating a rowmajor in1");
 
-    csrmm(&transa,
-      &m, &n, &k,
-      &alpha,
-      matdescra,
-      sp.valuePtr(), sp.innerIndexPtr(), sp.outerIndexPtr(), sp.outerIndexPtr() + 1,
-      (in2.IsRowMajor ^ (t2 == CblasTrans)) ? in2.data() : in2Transpose, &ldIn2,
-      &beta,
-      out_.data(), &ldOut);
+    // csrmm(&transa,
+    //   &m, &n, &k,
+    //   &alpha,
+    //   matdescra,
+    //   sp.valuePtr(), sp.innerIndexPtr(), sp.outerIndexPtr(), sp.outerIndexPtr() + 1,
+    //   (in2.IsRowMajor ^ (t2 == CblasTrans)) ? in2.data() : in2Transpose, &ldIn2,
+    //   &beta,
+    //   out_.data(), &ldOut);
+
+    // NIST SBLAS sparse matrix
+    // int A = uscr_begin((int) sp.rows(), (int) sp.cols());
+    //
+    // for(int i=0; i<sp.rows(); i++){
+    //   for(int j=0; j<sp.cols(); j++){
+    //     if(sp.coeff(i,j) != 0 ){
+    //       std::cout << " i,j=" << i << "," << j << " value=" << sp.coeff(i,j) << std::endl;
+    //       uscr_insert_entry(A, sp.coeff(i,j), i, j);
+    //     }
+    //
+    //   }
+    // } //end outer for
+    //
+    // csrmm(
+    //   blas_rowmajor,
+    //   blas_trans,
+    //   (int) n,
+    //   alpha,
+    //   A,
+    //   (in2.IsRowMajor ^ (t2 == CblasTrans)) ? in2.data() : in2Transpose,
+    //   (int) ldIn2,
+    //   out.data(),
+    //   (int) ldOut
+    // );
+    //
+    // BLAS_usds(A);  // free memory
+
     timer.nextTime("csrmm");
   }
 
-  omatcopy('R', 't',
+  omatcopy(CblasRowMajor, CblasTrans,
     out_.rows(), out_.cols(),
     1.0,
     out_.data(),
@@ -205,7 +259,7 @@ void mm(
 
 #ifdef LINUX
 #pragma GCC diagnostic ignored "-Wenum-compare"  // suppresses single warning
-#endif  
+#endif
   //in1.IsRowMajor checks if in1 is in csr
   assert(in1.IsRowMajor == in2.IsRowMajor);
   assert(out.rows() == ((t1 == CblasTrans) ? in1.cols() : in1.rows()));
@@ -229,7 +283,7 @@ void mm(
   MKL_INT k = in1.cols();
 
   FP_TYPE *in2Transpose = new FP_TYPE[in2.rows()*in2.cols()];
-  omatcopy(in2.IsRowMajor ? 'R' : 'C', 't',
+  omatcopy(in2.IsRowMajor ? CblasRowMajor : CblasColMajor, CblasTrans,
     in2.rows(), in2.cols(),
     1.0,
     in2.data(), in2.IsRowMajor ? in2.cols() : in2.rows(),
@@ -245,18 +299,44 @@ void mm(
     char transa = 't';
     assert(in1.IsRowMajor == false);
 
-    cscmm(&transa,
-      &m, &n, &k,
-      &alpha,
-      matdescra,
-      in1.valuePtr(), in1.innerIndexPtr(),
-      in1.outerIndexPtr(), in1.outerIndexPtr() + 1,
-      (in2.IsRowMajor ^ (t2 == CblasTrans)) ? in2.data() : in2Transpose, &ldIn2,
-      &beta,
-      out.data(), &ldOut);
+    // cscmm(&transa,
+    //   &m, &n, &k,
+    //   &alpha,
+    //   matdescra,
+    //   in1.valuePtr(), in1.innerIndexPtr(),
+    //   in1.outerIndexPtr(), in1.outerIndexPtr() + 1,
+    //   (in2.IsRowMajor ^ (t2 == CblasTrans)) ? in2.data() : in2Transpose, &ldIn2,
+    //   &beta,
+    //   out.data(), &ldOut);
+
+    // NIST SBLAS sparse matrix
+    int A = uscr_begin((int) in1.rows(), (int) in1.cols());
+
+    for(int i=0; i<in1.rows(); i++){
+      for(int j=0; j<in1.cols(); j++){
+        if(in1.coeff(i,j) != 0 ){
+          uscr_insert_entry(A, in1.coeff(i,j), i, j);
+        }
+
+      }
+    } //end outer for
+
+    cscmm(
+      blas_colmajor,
+      blas_no_trans,
+      (int) n,
+      alpha,
+      A,
+      (in2.IsRowMajor ^ (t2 == CblasTrans)) ? in2.data() : in2Transpose,
+      (int) ldIn2,
+      out.data(),
+      (int) ldOut
+    );
+
+    BLAS_usds(A);  // free memory
 
     assert(t1 == CblasTrans && t2 == CblasTrans);
-    //out = in1.transpose() * in2.transpose();
+    out = in1.transpose() * in2.transpose();
     timer.nextTime("cscmm");
   }
   else {
@@ -265,21 +345,49 @@ void mm(
     SparseMatrix<FP_TYPE, RowMajor, sparseIndex_t> sp(in1);
     timer.nextTime("creating a rowmajor in1");
 
-    csrmm(&transa,
-      &m, &n, &k,
-      &alpha,
-      matdescra,
-      sp.valuePtr(), sp.innerIndexPtr(), sp.outerIndexPtr(), sp.outerIndexPtr() + 1,
-      (in2.IsRowMajor ^ (t2 == CblasTrans)) ? in2.data() : in2Transpose, &ldIn2,
-      &beta,
-      out.data(), &ldOut);
+    // csrmm(&transa,
+    //   &m, &n, &k,
+    //   &alpha,
+    //   matdescra,
+    //   sp.valuePtr(), sp.innerIndexPtr(), sp.outerIndexPtr(), sp.outerIndexPtr() + 1,
+    //   (in2.IsRowMajor ^ (t2 == CblasTrans)) ? in2.data() : in2Transpose, &ldIn2,
+    //   &beta,
+    //   out.data(), &ldOut);
+
+    // NIST SBLAS sparse matrix
+    // int A = uscr_begin((int) sp.rows(), (int) sp.cols());
+    //
+    // for(int i=0; i<sp.rows(); i++){
+    //   for(int j=0; j<sp.cols(); j++){
+    //     if(sp.coeff(i,j) != 0 ){
+    //       std::cout << " i,j=" << i << "," << j << " value=" << sp.coeff(i,j) << std::endl;
+    //       uscr_insert_entry(A, sp.coeff(i,j), i, j);
+    //     }
+    //
+    //   }
+    // } //end outer for
+    //
+    // csrmm(
+    //   blas_rowmajor,
+    //   blas_trans,
+    //   (int) n,
+    //   alpha,
+    //   A,
+    //   (in2.IsRowMajor ^ (t2 == CblasTrans)) ? in2.data() : in2Transpose,
+    //   (int) ldIn2,
+    //   out.data(),
+    //   (int) ldOut
+    // );
+    //
+    // BLAS_usds(A);  // free memory
+
     timer.nextTime("csrmm");
   }
 
   delete[] in2Transpose;
 #endif
   // Calling LOG_DIAGNOSTIC(out) creates a conversion from Map<Matrix> to Matrix which brings a huge overhead with it!
-  // LOG_DIAGNOSTIC(out); 
+  // LOG_DIAGNOSTIC(out);
 }
 
 
@@ -296,7 +404,7 @@ void EdgeML::mm(
   Eigen::Index in2ColsBegin,
   Eigen::Index in2ColsEnd)
 {
-  // TODO: Rewrite this call to use space just the allocated for @out, 
+  // TODO: Rewrite this call to use space just the allocated for @out,
   // without creating another array for @outTranspose.
   static Logger local_logger("dense_mm");
   LOG_DIAGNOSTIC(in1);
@@ -323,7 +431,7 @@ void EdgeML::mm(
     MatrixXuf outTranspose(out.cols(), out.rows());
     assert(in2.outerIndexPtr()[0] == 0);
 
-    omatcopy(out.IsRowMajor ? 'R' : 'C', 't',
+    omatcopy(out.IsRowMajor ? CblasRowMajor : CblasColMajor, CblasTrans,
       out.rows(), out.cols(),
       1.0,
       out.data(),
@@ -339,7 +447,7 @@ void EdgeML::mm(
       in2ColsBegin, in2ColsEnd);
     timer.nextTime("ret from sp_dn_mm");
 
-    omatcopy(outTranspose.IsRowMajor ? 'R' : 'C', 't',
+    omatcopy(outTranspose.IsRowMajor ? CblasRowMajor : CblasColMajor, CblasTrans,
       outTranspose.rows(), outTranspose.cols(),
       1.0,
       outTranspose.data(),

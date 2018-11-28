@@ -18,13 +18,13 @@ int Bonsai::countnnz(const MatrixXuf& A)
 
 void Bonsai::hadamard2(MatrixXuf& M12, const MatrixXuf& M1, const MatrixXuf& M2)
 {
-  vMul(M12.rows()*M12.cols(), M1.data(), M2.data(), M12.data());
+  // vMul(M12.rows()*M12.cols(), M1.data(), M2.data(), M12.data());
 }
 
 void Bonsai::hadamard3(MatrixXuf& M123, const MatrixXuf& M1, const MatrixXuf& M2, const MatrixXuf& M3)
 {
-  vMul(M123.rows()*M123.cols(), M1.data(), M2.data(), M123.data());
-  vMul(M123.rows()*M123.cols(), M3.data(), M123.data(), M123.data());
+  // vMul(M123.rows()*M123.cols(), M1.data(), M2.data(), M123.data());
+  // vMul(M123.rows()*M123.cols(), M3.data(), M123.data(), M123.data());
 }
 
 void Bonsai::gradWCoeff(MatrixXuf& CoeffMat, const MatrixXuf& ZX, EdgeML::Bonsai::BonsaiTrainer& trainer,
@@ -446,9 +446,9 @@ void Bonsai::jointSgdBonsai(EdgeML::Bonsai::BonsaiTrainer& trainer)
 	SparseMatrixuf X_sliced = trainer.data.Xtrain.middleCols(begin, end - begin);
 	LabelMatType Y_sliced = trainer.data.Ytrain.middleCols(begin, end - begin);
 
-	//  1st 1/3rd iterations are for dense training, 
+	//  1st 1/3rd iterations are for dense training,
 	//  2nd 1/3rd are for the Core IHT algorithm
-	//  3rd 1/3rd is sparse retraining with fixed support 
+	//  3rd 1/3rd is sparse retraining with fixed support
 	if (i >= 1 * (numBatches) / 3
 	  && i < 2 * (numBatches) / 3)
 	{
@@ -693,7 +693,7 @@ void Bonsai::hardThrsd(MatrixXuf& mat, FP_TYPE sparsity)
 }
 
 // function xb = accproxsgd(f, gradf, prox, x, batchSize, epochs, n, eta, learning_rate)
-// returns the latest step-length used in case it has to be restarted. 
+// returns the latest step-length used in case it has to be restarted.
 template<class ParamType>
 void Bonsai::accproxsgd(std::function<FP_TYPE(const ParamType&,
   const Eigen::Index, const Eigen::Index)> f,
@@ -837,7 +837,7 @@ void Bonsai::createOutputDirs(const std::string& dataDir, std::string& currResul
   time_t now = time(0);
   tm *ltm = localtime(&now);
 
-  std::string append_path 
+  std::string append_path
 	= std::to_string(ltm->tm_hour) + "_" + std::to_string(ltm->tm_min)
 	+ "_" + std::to_string(ltm->tm_sec) + "_" + std::to_string(ltm->tm_mday)
 	+ "_" + std::to_string(1 + ltm->tm_mon);
@@ -849,7 +849,7 @@ void Bonsai::createOutputDirs(const std::string& dataDir, std::string& currResul
   _mkdir(resultsPath.c_str());
   _mkdir(currResultsPath.c_str());
   _mkdir(paramsPath.c_str());
-#else 
+#else
   mkdir(resultsPath.c_str(), 0777);
   mkdir(currResultsPath.c_str(), 0777);
   mkdir(paramsPath.c_str(), 0777);

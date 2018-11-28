@@ -4,7 +4,11 @@
 #ifndef __PRE_PROCESSOR_H__
 #define __PRE_PROCESSOR_H__
 
-#include "mkl.h"
+#include "cblas.h"
+#include "blas_sparse.h"
+
+#define MKL_INT long long int
+#define MKL_UINT unsigned long long int
 
 ////////////////////////////////////////////////////////
 // DO NOT REORDER THIS: must occur before Eigen includes
@@ -27,8 +31,8 @@
 #include <cstdlib>
 #include <queue>
 #include <random>
-#ifdef _MSC_VER 
-#include <direct.h> 
+#ifdef _MSC_VER
+#include <direct.h>
 #else
 #include <sys/stat.h> //Check for Windows
 #endif
@@ -38,7 +42,7 @@ using namespace Eigen;
 
 #ifndef COMPILER_GCC
 //#pragma comment(lib, "../../../../Libraries/MKL/Win/Microsoft.MachineLearning.MklImports.lib")
-#endif 
+#endif
 
 //input and output are assumed to be of the same format (single/double)
 #ifdef DOUBLE
@@ -49,18 +53,20 @@ typedef FP_TYPE     LABEL_TYPE;
 #define gemm        cblas_dgemm
 #define gemv        cblas_dgemv
 #define cscmv       mkl_dcscmv
-#define cscmm       mkl_dcscmm
+#define cscmm       BLAS_dusmm
 #define csrmm       mkl_dcsrmm
-#define omatcopy    mkl_domatcopy
+#define omatcopy    cblas_domatcopy
 #define amax        cblas_idamax
 #define dot         cblas_ddot
 #define imin        cblas_idamin
 #define axpy        cblas_daxpy
-#define vMul		vdMul
-#define vTanh		vdTanh
+// #define vMul		vdMul
+// #define vTanh		vdTanh
 #define scal		cblas_dscal
 #define vSqr		vdSqr
 #define vDiv 		vdDiv
+#define uscr_begin         BLAS_duscr_begin
+#define uscr_insert_entry  BLAS_duscr_insert_entry
 #endif
 
 #ifdef SINGLE
@@ -71,22 +77,24 @@ typedef float       LABEL_TYPE;
 #define gemm        cblas_sgemm
 #define gemv        cblas_sgemv
 #define cscmv       mkl_scscmv
-#define cscmm       mkl_scscmm
+#define cscmm       BLAS_susmm
 #define csrmm       mkl_scsrmm
-#define omatcopy    mkl_somatcopy
+#define omatcopy    cblas_somatcopy
 #define amax        cblas_isamax
 #define dot         cblas_sdot
 #define imin        cblas_isamin
 #define axpy        cblas_saxpy
-#define vMul		vsMul
-#define vTanh		vsTanh
+// #define vMul		vsMul
+// #define vTanh		vsTanh
 #define scal		cblas_sscal
 #define vSqr 		vsSqr
 #define vDiv		vsDiv
+#define uscr_begin         BLAS_suscr_begin
+#define uscr_insert_entry  BLAS_suscr_insert_entry
 #endif
 
 
-//number of features and datapoints are assumed to 
+//number of features and datapoints are assumed to
 //be of the same format (unsigned long long or now)
 typedef MKL_UINT dataCount_t;
 typedef MKL_UINT labelCount_t;
@@ -134,4 +142,3 @@ typedef MKL_INT sparseIndex_t;
 static IOFormat eigen_tsv(FullPrecision, DontAlignCols, "\t", "\n", "", "", "", "");
 
 #endif
-
